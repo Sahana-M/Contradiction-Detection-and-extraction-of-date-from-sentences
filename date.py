@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Jul 14 12:04:29 2018
-@author: OpenSource
 """
 import datetime as dt
 text=[]
