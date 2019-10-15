@@ -1,0 +1,94 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Jun  2 14:08:20 2019
+
+@author: USER
+"""
+# do splitting after applying all algorithms
+import nltk
+from nltk.corpus import stopwords
+from sklearn.datasets import load_iris 
+from nltk.stem import PorterStemmer
+from sklearn.model_selection import train_test_split
+import requests
+import re
+import numpy as np 
+import pandas as pd 
+from nltk.stem import WordNetLemmatizer 
+from sklearn.naive_bayes import GaussianNB
+lemmatizer = WordNetLemmatizer()
+from pywsd.utils import lemmatize_sentence
+data= pd.read_csv(r'C:\Users\USER\Desktop\c.csv')
+data=data.dropna() 
+y=data['LABEL']
+sentences=[]
+for i in data['TEXT1']:
+     sentence=re.sub(r'\s+'," ",i)
+     sentence=re.sub(r'[0-9]+',' ',i)
+     sentence=sentence.lower()
+     sentences.append(sentence)
+sentences=[nltk.word_tokenize(sentence) for sentence in sentences]
+for i in range(len(sentences)):
+   sentences[i]=[word for word in sentences[i] if word not in stopwords.words('english')]
+sentences3=[]
+lmtzr = WordNetLemmatizer()
+for i in range(len(sentences)):
+    sentence=' '.join([lemmatizer.lemmatize(w) for w in sentences[i]])
+    sentences3.append(sentence)
+sentences2=[]
+for i in data['TEXT2']:
+     sentence=re.sub(r'\s+'," ",i)
+     sentence=re.sub(r'[0-9]+',' ',i)
+     sentence=sentence.lower()
+     sentences2.append(sentence)
+     
+sentences2=[nltk.word_tokenize(sentence) for sentence in sentences2]
+for i in range(len(sentences2)):
+   sentences2[i]=[word for word in sentences2[i] if word not in stopwords.words('english')]
+sentences4=[]
+lmtzr = WordNetLemmatizer()
+for i in range(len(sentences)):
+    sentence=' '.join([lemmatizer.lemmatize(w) for w in sentences[i]])
+    sentences4.append(sentence)
+    
+
+X_train,X_test,y_train,y_test=train_test_split(data,y,test_size=0.2)
+X_train.reset_index(inplace=True)
+X_test.reset_index(inplace=True)
+y_train.reset_index(inplace=True)
+y_test.reset_index(inplace=True)
+
+q=[]
+def jaccard(x,y):
+    jd_sent = nltk.jaccard_distance(set(x),set(y))
+    return jd_sent
+w=[]
+def edit(x,y):
+    edit_dist=nltk.edit_distance(x, y)
+    return edit_dist
+    
+for i in range(len(X_train)):
+    jaccard_distance=jaccard(X_train['TEXT1'][i],X_train['TEXT2'][i])
+    q.append(jaccard_distance)
+    edit_distance=edit(X_train['TEXT1'][i],X_train['TEXT2'][i])
+    w.append(edit_distance)
+e=[]
+r=[]
+for i in range(len(X_test)):
+    jaccard_distance=jaccard(X_train['TEXT1'][i],X_train['TEXT2'][i])
+    e.append(jaccard_distance)
+    edit_distance=edit(X_train['TEXT1'][i],X_train['TEXT2'][i])
+    r.append(edit_distance)
+MyEmptydf = pd.DataFrame()
+MyEmptydf['jaccard distance'] = pd.Series(q)
+MyEmptydf['edit distance'] = pd.Series(w)   
+#data.columns = ["a", "b"]
+MyEmptydf2 = pd.DataFrame()
+MyEmptydf2['jaccard distance'] = pd.Series(e)
+MyEmptydf2['edit distance'] = pd.Series(r) 
+gnb = GaussianNB() 
+gnb.fit(MyEmptydf, y_train)
+y_pred = gnb.predict(MyEmptydf2)
+from sklearn import metrics
+print("Gaussian Naive Bayes model accuracy(in %):", metrics.accuracy_score(y_test, y_pred))
+# for more accuracy use other classification method
